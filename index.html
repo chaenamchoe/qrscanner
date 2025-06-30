@@ -178,7 +178,6 @@
   <div class="container">
     <div class="header">
       <h1>📱 QR 코드 스캐너</h1>
-      <p>QR 코드를 카메라에 비춰주세요</p>
     </div>
     
     <div class="scanner-section">
@@ -218,8 +217,8 @@
       // 일반적인 스캔 실패는 무시 (QR 코드가 없을 때)
       if (error && error.name !== 'NotFoundException') {
         console.warn(`QR 스캔 오류: ${error}`);
-        document.getElementById('status').innerHTML = '⚠️ 스캔 중 오류가 발생했습니다.';
-        document.getElementById('status').style.color = '#dc3545';
+        // document.getElementById('status').innerHTML = '⚠️ 스캔 중 오류가 발생했습니다.';
+        // document.getElementById('status').style.color = '#dc3545';
       }
     }
 
@@ -239,7 +238,7 @@
         
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
         isScanning = true;
-        document.getElementById('status').innerHTML = '📹 카메라가 활성화되었습니다. QR 코드를 비춰주세요.';
+        // document.getElementById('status').innerHTML = '📹 카메라가 활성화되었습니다. QR 코드를 비춰주세요.';
         document.getElementById('status').style.color = '#007bff';
       } catch (error) {
         console.error('스캐너 시작 오류:', error);
