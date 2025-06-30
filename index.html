@@ -1,30 +1,276 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>QR Code Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR 코드 스캐너</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+      margin: 20px 0;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .header p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .scanner-section {
+      padding: 20px;
+    }
+
+    #reader {
+      width: 100% !important;
+      max-width: 100%;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .result-section {
+      padding: 20px;
+      background: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .result-section h3 {
+      color: #495057;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+    }
+
+    #result {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid #e9ecef;
+      min-height: 60px;
+      word-break: break-all;
+      font-size: 0.9rem;
+      color: #495057;
+    }
+
+    .status {
+      text-align: center;
+      padding: 10px;
+      color: #6c757d;
+      font-size: 0.85rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    /* 모바일 최적화 */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        margin: 10px 0;
+        border-radius: 15px;
+      }
+      
+      .header {
+        padding: 20px 15px;
+      }
+      
+      .header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .scanner-section {
+        padding: 15px;
+      }
+      
+      .result-section {
+        padding: 15px;
+      }
+      
+      .controls {
+        flex-direction: column;
+      }
+      
+      .btn {
+        min-width: auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.3rem;
+      }
+      
+      #result {
+        font-size: 0.8rem;
+        padding: 12px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>QR 코드 스캔</h1>
-  <div id="reader" style="width:300px"></div>
-  <div id="result"></div>
+  <div class="container">
+    <div class="header">
+      <h1>📱 QR 코드 스캐너</h1>
+      <p>QR 코드를 카메라에 비춰주세요</p>
+    </div>
+    
+    <div class="scanner-section">
+      <div id="reader"></div>
+      <div class="status" id="status">카메라 접근 권한을 허용해주세요...</div>
+    </div>
+    
+    <div class="result-section">
+      <h3>📋 스캔 결과</h3>
+      <div id="result">QR 코드를 스캔하면 결과가 여기에 표시됩니다.</div>
+      <div class="controls">
+        <button class="btn btn-primary" onclick="startScanner()">스캔 시작</button>
+        <button class="btn btn-secondary" onclick="stopScanner()">스캔 중지</button>
+        <button class="btn btn-secondary" onclick="clearResult()">결과 지우기</button>
+      </div>
+    </div>
+  </div>
 
   <script>
+    let html5QrcodeScanner = null;
+    let isScanning = false;
+
     function onScanSuccess(decodedText, decodedResult) {
-      document.getElementById('result').innerText = decodedText;
-      html5QrcodeScanner.clear(); // 스캔 중지
+      document.getElementById('result').innerHTML = `
+        <strong>✅ 스캔 성공!</strong><br>
+        <span style="color: #28a745;">${decodedText}</span>
+      `;
+      document.getElementById('status').innerHTML = '✅ QR 코드가 성공적으로 스캔되었습니다!';
+      document.getElementById('status').style.color = '#28a745';
+      
+      // 스캔 성공 후 자동으로 중지하지 않고 계속 스캔
+      // 필요시 아래 주석을 해제하세요
+      // stopScanner();
     }
 
     function onScanFailure(error) {
-      console.warn(`QR Scan failed: ${error}`);
+      // 일반적인 스캔 실패는 무시 (QR 코드가 없을 때)
+      if (error && error.name !== 'NotFoundException') {
+        console.warn(`QR 스캔 오류: ${error}`);
+        document.getElementById('status').innerHTML = '⚠️ 스캔 중 오류가 발생했습니다.';
+        document.getElementById('status').style.color = '#dc3545';
+      }
     }
 
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", 
-      { fps: 10, qrbox: 250 }
-    );
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    function startScanner() {
+      if (isScanning) return;
+      
+      try {
+        html5QrcodeScanner = new Html5QrcodeScanner(
+          "reader", 
+          { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+          }
+        );
+        
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        isScanning = true;
+        document.getElementById('status').innerHTML = '📹 카메라가 활성화되었습니다. QR 코드를 비춰주세요.';
+        document.getElementById('status').style.color = '#007bff';
+      } catch (error) {
+        console.error('스캐너 시작 오류:', error);
+        document.getElementById('status').innerHTML = '❌ 카메라 접근에 실패했습니다. 브라우저 설정을 확인해주세요.';
+        document.getElementById('status').style.color = '#dc3545';
+      }
+    }
+
+    function stopScanner() {
+      if (html5QrcodeScanner && isScanning) {
+        html5QrcodeScanner.clear();
+        html5QrcodeScanner = null;
+        isScanning = false;
+        document.getElementById('status').innerHTML = '⏸️ 스캐너가 중지되었습니다.';
+        document.getElementById('status').style.color = '#6c757d';
+      }
+    }
+
+    function clearResult() {
+      document.getElementById('result').innerHTML = 'QR 코드를 스캔하면 결과가 여기에 표시됩니다.';
+    }
+
+    // 페이지 로드 시 자동으로 스캐너 시작
+    window.addEventListener('load', function() {
+      setTimeout(startScanner, 1000);
+    });
+
+    // 페이지 언로드 시 스캐너 정리
+    window.addEventListener('beforeunload', function() {
+      stopScanner();
+    });
   </script>
 </body>
 </html>
